@@ -2,6 +2,28 @@ var express = require('express');
 var router = express.Router();
 var speech_to_text = require('./features/speech_to_text');
 
-module.exports = router;
+//module.exports = router;
 // speech-to-text
-router.get('/api/speech-to-text/token*',speech_to_text.token);
+//router.get('/api/speech-to-text/token*',speech_to_text.token);
+var extend = require('extend');
+var watson = require('watson-developer-cloud');
+var vcapServices = require('vcap_services');
+
+var config = require('../../env.json');
+
+exports.token = function(req, res) {
+   var sttConfig = extend(config.speech_to_text, vcapServices.getCredentials('speech_to_text'));
+
+   var sttAuthService = watson.authorization(sttConfig);
+
+   sttAuthService.getToken({
+       url: sttConfig.url
+   }, function(err, token) {
+       if (err) {
+           console.log('Error retrieving token: ', err);
+           res.status(500).send('Error retrieving token');
+           return;
+       }
+       res.send(token);
+   });
+}
